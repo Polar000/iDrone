@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../data/repositories/app_store.dart';
+import '../../data/models/idrone_models.dart';
 import '../../app/theme/app_colors.dart';
 
 class SplashScreen extends StatefulWidget {
