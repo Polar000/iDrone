@@ -4,15 +4,15 @@ import 'package:flutter/material.dart';
 class IDroneLogoWidget extends StatelessWidget {
   final double size;
   final Color greenColor;
-  final Color backgroundColor;
+  final Color? backgroundColor;
   final bool showBackground;
 
   const IDroneLogoWidget({
     super.key,
     this.size = 80,
     this.greenColor = const Color(0xFF00E61A),
-    this.backgroundColor = const Color(0xFF071812),
-    this.showBackground = true,
+    this.backgroundColor,
+    this.showBackground = false,
   });
 
   @override
@@ -20,7 +20,7 @@ class IDroneLogoWidget extends StatelessWidget {
     return Container(
       width: size,
       height: size,
-      decoration: showBackground
+      decoration: showBackground && backgroundColor != null
           ? BoxDecoration(
               color: backgroundColor,
               borderRadius: BorderRadius.circular(size * 0.28),
@@ -33,7 +33,7 @@ class IDroneLogoWidget extends StatelessWidget {
               ],
             )
           : null,
-      padding: EdgeInsets.all(size * 0.18),
+      padding: EdgeInsets.all(size * 0.12),
       child: CustomPaint(
         painter: _DronePainter(color: greenColor),
       ),

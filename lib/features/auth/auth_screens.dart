@@ -35,7 +35,7 @@ class _SplashScreenState extends State<SplashScreen> {
           children: [
             const IDroneLogoWidget(
               size: 130,
-              backgroundColor: Color(0xFF061A13),
+              showBackground: false,
               greenColor: Color(0xFF00E61A),
             ),
             const SizedBox(height: 32),
@@ -118,7 +118,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 30),
                 Row(
                   children: const [
-                    IDroneLogoWidget(size: 48, backgroundColor: Color(0xFF061A13)),
+                    IDroneLogoWidget(size: 48, showBackground: false),
                     SizedBox(width: 12),
                     Text(
                       'iDRONE',
