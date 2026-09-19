@@ -10,8 +10,8 @@ class IDroneLogoWidget extends StatelessWidget {
   const IDroneLogoWidget({
     super.key,
     this.size = 80,
-    this.greenColor = const Color(0xFF00D819),
-    this.backgroundColor = const Color(0xFF061A12),
+    this.greenColor = const Color(0xFF00D215),
+    this.backgroundColor = const Color(0xFF061E14),
     this.showBackground = true,
   });
 
@@ -24,13 +24,6 @@ class IDroneLogoWidget extends StatelessWidget {
           ? BoxDecoration(
               color: backgroundColor,
               borderRadius: BorderRadius.circular(size * 0.28),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.35),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                )
-              ],
             )
           : null,
       padding: EdgeInsets.all(size * 0.16),
@@ -48,40 +41,58 @@ class _DronePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    final strokeWidth = size.width * 0.12;
+
     final strokePaint = Paint()
       ..color = color
       ..style = PaintingStyle.stroke
-      ..strokeWidth = size.width * 0.13
+      ..strokeWidth = strokeWidth
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round;
 
+    final fillPaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+
     final cx = size.width / 2;
     final cy = size.height / 2;
-    final armLen = size.width * 0.25;
 
     // Center hollow square body
     final sqSize = size.width * 0.22;
+    final sqRect = Rect.fromCenter(center: Offset(cx, cy), width: sqSize, height: sqSize);
+    final sqRRect = RRect.fromRectAndRadius(sqRect, const Radius.circular(3));
+    canvas.drawRRect(sqRRect, strokePaint);
+
+    // Inner square dot / hole
+    final innerSqSize = size.width * 0.05;
     canvas.drawRect(
-      Rect.fromCenter(center: Offset(cx, cy), width: sqSize, height: sqSize),
-      strokePaint..style = PaintingStyle.stroke,
+      Rect.fromCenter(center: Offset(cx, cy), width: innerSqSize, height: innerSqSize),
+      fillPaint,
     );
 
-    // 4 Diagonal arms & 4 Outer C-propeller guards
-    final angles = [pi / 4, 3 * pi / 4, 5 * pi / 4, 7 * pi / 4];
-    final propRadius = size.width * 0.18;
+    // 4 Diagonal arms & 4 Inward C-ring propeller guards
+    final armLen = size.width * 0.27;
+    final propRadius = size.width * 0.17;
+    final angles = [-pi / 4, pi / 4, 3 * pi / 4, -3 * pi / 4];
 
     for (final angle in angles) {
       final armX = cx + armLen * cos(angle);
       final armY = cy + armLen * sin(angle);
 
-      // Draw thick diagonal arm extending from center square
+      // Diagonal arm line from center square corner to propeller center
       canvas.drawLine(Offset(cx, cy), Offset(armX, armY), strokePaint);
 
-      // Draw C-ring propeller guard centered at arm tip
+      // Inward facing C-ring arc:
+      // Opening/gap is centered towards (cx, cy), which is `angle + pi`.
+      // Sweep is 270 deg (1.5 * pi), leaving a 90 deg gap facing inwards.
+      final gapCenter = angle + pi;
+      final startAngle = gapCenter + pi / 4; // 45 deg past gap center
+      const sweepAngle = 1.5 * pi; // 270 degrees sweep
+
       canvas.drawArc(
         Rect.fromCircle(center: Offset(armX, armY), radius: propRadius),
-        angle - pi * 0.75,
-        pi * 1.5,
+        startAngle,
+        sweepAngle,
         false,
         strokePaint,
       );
