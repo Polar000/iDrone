@@ -1,0 +1,504 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../data/repositories/app_store.dart';
+import '../../data/models/idrone_models.dart';
+import '../../components/app_card.dart';
+import '../../components/app_buttons.dart';
+import '../../app/theme/app_colors.dart';
+
+class ServiceCatalogScreen extends StatelessWidget {
+  final Function(ServiceModel)? onSelectService;
+
+  const ServiceCatalogScreen({super.key, this.onSelectService});
+
+  @override
+  Widget build(BuildContext context) {
+    final store = Provider.of<AppStore>(context);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Catálogo de Servicios'),
+        elevation: 0,
+      ),
+      body: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: store.services.length,
+        itemBuilder: (context, index) {
+          final srv = store.services[index];
+          return Container(
+            margin: const EdgeInsets.only(bottom: 16),
+            child: AppCard(
+              onTap: onSelectService != null ? () => onSelectService!(srv) : null,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppColors.softGreen,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(Icons.agriculture_rounded, color: AppColors.deepForest, size: 28),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              srv.name,
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                            ),
+                            Text(
+                              'Duración: ${srv.estimatedDuration}',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: isDark ? AppColors.darkTextMuted : AppColors.mutedText,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Text(
+                        '\$${srv.basePricePerHectare.toInt()}',
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.emerald,
+                        ),
+                      ),
+                      const Text(
+                        ' /Ha',
+                        style: TextStyle(fontSize: 12, color: AppColors.mutedText),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    srv.description,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: isDark ? AppColors.darkTextPrimary : AppColors.darkText,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  PrimaryButton(
+                    label: 'Solicitar ${srv.name}',
+                    icon: Icons.check_circle_outline_rounded,
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => BookingWizardScreen(initialService: srv),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class BookingWizardScreen extends StatefulWidget {
+  final ServiceModel? initialService;
+
+  const BookingWizardScreen({super.key, this.initialService});
+
+  @override
+  State<BookingWizardScreen> createState() => _BookingWizardScreenState();
+}
+
+class _BookingWizardScreenState extends State<BookingWizardScreen> {
+  int _currentStep = 0;
+
+  ServiceModel? _selectedService;
+  ParcelModel? _selectedParcel;
+  String _selectedCrop = 'Maíz';
+  DateTime _selectedDate = DateTime.now().add(const Duration(days: 2));
+  String _paymentOption = 'deposit'; // 'deposit' (25%) or 'full' (100%)
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedService = widget.initialService;
+  }
+
+  void _nextStep() {
+    if (_currentStep == 0 && _selectedService == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Selecciona un servicio para continuar')),
+      );
+      return;
+    }
+    if (_currentStep == 1 && _selectedParcel == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Selecciona una parcela para continuar')),
+      );
+      return;
+    }
+
+    if (_currentStep < 4) {
+      setState(() => _currentStep++);
+    } else {
+      _confirmBooking();
+    }
+  }
+
+  void _prevStep() {
+    if (_currentStep > 0) {
+      setState(() => _currentStep--);
+    }
+  }
+
+  void _confirmBooking() {
+    final store = Provider.of<AppStore>(context, listen: false);
+
+    final hectares = _selectedParcel!.areaHectares;
+    final subtotal = store.calculateQuoteSubtotal(_selectedService!.id, hectares);
+    final discount = hectares > 100 ? 1500.0 : 0.0;
+    final total = subtotal - discount;
+    final paidAmount = _paymentOption == 'deposit' ? total * 0.25 : total;
+
+    final newBooking = BookingModel(
+      id: 'bk_${DateTime.now().millisecondsSinceEpoch}',
+      userId: store.currentUser.id,
+      serviceId: _selectedService!.id,
+      parcelId: _selectedParcel!.id,
+      cropType: _selectedCrop,
+      areaHectares: hectares,
+      scheduledDate: _selectedDate,
+      subtotal: subtotal,
+      discount: discount,
+      total: total,
+      paidAmount: paidAmount,
+      status: BookingStatus.confirmed,
+      createdAt: DateTime.now(),
+    );
+
+    store.addBooking(newBooking);
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.check_circle_rounded, color: AppColors.successGreen, size: 28),
+            SizedBox(width: 8),
+            Text('¡Reserva Confirmada!'),
+          ],
+        ),
+        content: Text(
+          'Tu servicio de ${_selectedService!.name} ha sido reservado con éxito. '
+          'Pago registrado: \$${paidAmount.toStringAsFixed(2)} MXN.',
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.pop(context);
+            },
+            child: const Text('Entendido'),
+          )
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final store = Provider.of<AppStore>(context);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    if (_selectedService == null && store.services.isNotEmpty) {
+      _selectedService = store.services.first;
+    }
+    if (_selectedParcel == null && store.parcels.isNotEmpty) {
+      _selectedParcel = store.parcels.first;
+    }
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Paso ${_currentStep + 1} de 5'),
+        elevation: 0,
+      ),
+      body: Column(
+        children: [
+          LinearProgressIndicator(
+            value: (_currentStep + 1) / 5.0,
+            backgroundColor: isDark ? AppColors.darkBorder : AppColors.softGreen,
+            valueColor: const AlwaysStoppedAnimation<Color>(AppColors.emerald),
+          ),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: _buildStepContent(store, isDark),
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.darkSurface : Colors.white,
+              border: Border(top: BorderSide(color: isDark ? AppColors.darkBorder : Colors.black.withValues(alpha: 0.05))),
+            ),
+            child: Row(
+              children: [
+                if (_currentStep > 0) ...[
+                  Expanded(
+                    child: SecondaryButton(
+                      label: 'Anterior',
+                      onPressed: _prevStep,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                ],
+                Expanded(
+                  child: PrimaryButton(
+                    label: _currentStep == 4 ? 'Confirmar & Pagar' : 'Siguiente',
+                    onPressed: _nextStep,
+                  ),
+                ),
+              ],
+            ),
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStepContent(AppStore store, bool isDark) {
+    switch (_currentStep) {
+      case 0:
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('1. Selecciona el Servicio', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 16),
+            ...store.services.map((srv) {
+              final isSelected = _selectedService?.id == srv.id;
+              return Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                child: AppCard(
+                  border: isSelected ? Border.all(color: AppColors.emerald, width: 2) : null,
+                  onTap: () => setState(() => _selectedService = srv),
+                  child: Row(
+                    children: [
+                      Icon(
+                        isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
+                        color: isSelected ? AppColors.emerald : AppColors.mutedText,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(srv.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                            Text('\$${srv.basePricePerHectare.toInt()} / Hectárea', style: const TextStyle(color: AppColors.emerald, fontWeight: FontWeight.w600)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }),
+          ],
+        );
+
+      case 1:
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('2. Selecciona la Parcela', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 16),
+            ...store.parcels.map((pcl) {
+              final isSelected = _selectedParcel?.id == pcl.id;
+              return Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                child: AppCard(
+                  border: isSelected ? Border.all(color: AppColors.emerald, width: 2) : null,
+                  onTap: () => setState(() => _selectedParcel = pcl),
+                  child: Row(
+                    children: [
+                      Icon(
+                        isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
+                        color: isSelected ? AppColors.emerald : AppColors.mutedText,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(pcl.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                            Text('Área: ${pcl.areaHectares} Ha | Cultivo: ${pcl.cropType}', style: const TextStyle(fontSize: 13)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }),
+          ],
+        );
+
+      case 2:
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('3. Fecha de Operación', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 16),
+            AppCard(
+              child: Column(
+                children: [
+                  CalendarDatePicker(
+                    initialDate: _selectedDate,
+                    firstDate: DateTime.now(),
+                    lastDate: DateTime.now().add(const Duration(days: 90)),
+                    onDateChanged: (d) => setState(() => _selectedDate = d),
+                  ),
+                ],
+              ),
+            )
+          ],
+        );
+
+      case 3:
+        final hectares = _selectedParcel?.areaHectares ?? 0.0;
+        final subtotal = store.calculateQuoteSubtotal(_selectedService!.id, hectares);
+        final discount = hectares > 100 ? 1500.0 : 0.0;
+        final total = subtotal - discount;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('4. Cotización del Servicio', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 16),
+            AppCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _SummaryRow(label: 'Servicio', value: _selectedService!.name),
+                  _SummaryRow(label: 'Parcela', value: _selectedParcel!.name),
+                  _SummaryRow(label: 'Área Total', value: '${hectares.toStringAsFixed(1)} Hectáreas'),
+                  _SummaryRow(label: 'Tarifa Base', value: '\$${_selectedService!.basePricePerHectare}/Ha'),
+                  const Divider(height: 24),
+                  _SummaryRow(label: 'Subtotal', value: '\$${subtotal.toStringAsFixed(2)}'),
+                  if (discount > 0)
+                    _SummaryRow(label: 'Descuento (+100 Ha)', value: '-\$${discount.toStringAsFixed(2)}', valueColor: AppColors.successGreen),
+                  const Divider(height: 24),
+                  _SummaryRow(
+                    label: 'TOTAL',
+                    value: '\$${total.toStringAsFixed(2)} MXN',
+                    isBold: true,
+                    valueColor: AppColors.emerald,
+                  ),
+                ],
+              ),
+            )
+          ],
+        );
+
+      case 4:
+      default:
+        final hectares = _selectedParcel?.areaHectares ?? 0.0;
+        final subtotal = store.calculateQuoteSubtotal(_selectedService!.id, hectares);
+        final discount = hectares > 100 ? 1500.0 : 0.0;
+        final total = subtotal - discount;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('5. Opciones de Pago', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 16),
+            AppCard(
+              border: _paymentOption == 'deposit' ? Border.all(color: AppColors.emerald, width: 2) : null,
+              onTap: () => setState(() => _paymentOption = 'deposit'),
+              child: Row(
+                children: [
+                  Icon(_paymentOption == 'deposit' ? Icons.radio_button_checked : Icons.radio_button_off, color: AppColors.emerald),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Reservar con Depósito 25%', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                        Text('\$${(total * 0.25).toStringAsFixed(2)} MXN hoy', style: const TextStyle(color: AppColors.emerald, fontWeight: FontWeight.bold)),
+                        const Text('Paga el 75% restante al finalizar la operación', style: TextStyle(fontSize: 12, color: AppColors.mutedText)),
+                      ],
+                    ),
+                  )
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            AppCard(
+              border: _paymentOption == 'full' ? Border.all(color: AppColors.emerald, width: 2) : null,
+              onTap: () => setState(() => _paymentOption = 'full'),
+              child: Row(
+                children: [
+                  Icon(_paymentOption == 'full' ? Icons.radio_button_checked : Icons.radio_button_off, color: AppColors.emerald),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Pagar 100% Completo', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                        Text('\$${total.toStringAsFixed(2)} MXN hoy', style: const TextStyle(color: AppColors.emerald, fontWeight: FontWeight.bold)),
+                        const Text('Garantía total de asignación de dron y operador', style: TextStyle(fontSize: 12, color: AppColors.mutedText)),
+                      ],
+                    ),
+                  )
+                ],
+              ),
+            ),
+          ],
+        );
+    }
+  }
+}
+
+class _SummaryRow extends StatelessWidget {
+  final String label;
+  final String value;
+  final bool isBold;
+  final Color? valueColor;
+
+  const _SummaryRow({
+    required this.label,
+    required this.value,
+    this.isBold = false,
+    this.valueColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: TextStyle(fontSize: 14, fontWeight: isBold ? FontWeight.bold : FontWeight.normal)),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: isBold ? 18 : 14,
+              fontWeight: isBold ? FontWeight.bold : FontWeight.w600,
+              color: valueColor,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
