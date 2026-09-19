@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../data/repositories/app_store.dart';
+import '../../data/models/idrone_models.dart';
 import '../../components/app_card.dart';
 import '../../components/app_badges_and_stats.dart';
 import '../../app/theme/app_colors.dart';
@@ -103,7 +104,7 @@ class HomeScreen extends StatelessWidget {
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 26,
-                                  fontWeight: FontWeight.extrabold,
+                                  fontWeight: FontWeight.w800,
                                 ),
                               ),
                               const SizedBox(height: 8),

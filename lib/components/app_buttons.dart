@@ -38,7 +38,7 @@ class PrimaryButton extends StatelessWidget {
           )
         : Row(
             mainAxisSize: MainAxisSize.min,
-            main: MainAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               if (icon != null) ...[
                 Icon(icon, size: 20, color: textColor),
@@ -97,7 +97,7 @@ class SecondaryButton extends StatelessWidget {
 
     Widget child = Row(
       mainAxisSize: MainAxisSize.min,
-      main: MainAxisAlignment.center,
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
         if (icon != null) ...[
           Icon(icon, size: 20, color: textColor),
