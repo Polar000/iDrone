@@ -10,8 +10,8 @@ class IDroneLogoWidget extends StatelessWidget {
   const IDroneLogoWidget({
     super.key,
     this.size = 80,
-    this.greenColor = const Color(0xFF00C814),
-    this.backgroundColor = const Color(0xFF0A1C12),
+    this.greenColor = const Color(0xFF00E61A),
+    this.backgroundColor = const Color(0xFF071812),
     this.showBackground = true,
   });
 
@@ -24,9 +24,16 @@ class IDroneLogoWidget extends StatelessWidget {
           ? BoxDecoration(
               color: backgroundColor,
               borderRadius: BorderRadius.circular(size * 0.28),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.3),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                )
+              ],
             )
           : null,
-      padding: EdgeInsets.all(size * 0.15),
+      padding: EdgeInsets.all(size * 0.18),
       child: CustomPaint(
         painter: _DronePainter(color: greenColor),
       ),
@@ -44,19 +51,15 @@ class _DronePainter extends CustomPainter {
     final strokePaint = Paint()
       ..color = color
       ..style = PaintingStyle.stroke
-      ..strokeWidth = size.width * 0.12
+      ..strokeWidth = size.width * 0.13
       ..strokeCap = StrokeCap.round;
-
-    final fillPaint = Paint()
-      ..color = color
-      ..style = PaintingStyle.fill;
 
     final cx = size.width / 2;
     final cy = size.height / 2;
     final armLen = size.width * 0.26;
 
     // Center square body
-    final sqSize = size.width * 0.20;
+    final sqSize = size.width * 0.22;
     canvas.drawRect(
       Rect.fromCenter(center: Offset(cx, cy), width: sqSize, height: sqSize),
       strokePaint..style = PaintingStyle.stroke,

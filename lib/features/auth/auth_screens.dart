@@ -28,37 +28,45 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.deepForest,
+      backgroundColor: const Color(0xFF042B24),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const IDroneLogoWidget(size: 110),
-            const SizedBox(height: 24),
+            const IDroneLogoWidget(
+              size: 130,
+              backgroundColor: Color(0xFF061A13),
+              greenColor: Color(0xFF00E61A),
+            ),
+            const SizedBox(height: 32),
             const Text(
               'iDRONE',
               style: TextStyle(
                 color: Colors.white,
-                fontSize: 36,
+                fontSize: 34,
                 fontWeight: FontWeight.bold,
-                letterSpacing: 4,
+                letterSpacing: 3,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             const Text(
               'AGRICULTURA DE PRECISIÓN',
               style: TextStyle(
-                color: AppColors.limeAccent,
+                color: Color(0xFFC8F45A),
                 fontSize: 12,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.bold,
                 letterSpacing: 2,
               ),
             ),
-            const SizedBox(height: 48),
-            const CircularProgressIndicator(
-              color: AppColors.limeAccent,
-              strokeWidth: 2,
-            )
+            const SizedBox(height: 60),
+            const SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(
+                color: Color(0xFFC8F45A),
+                strokeWidth: 2.5,
+              ),
+            ),
           ],
         ),
       ),
@@ -110,7 +118,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 30),
                 Row(
                   children: const [
-                    IDroneLogoWidget(size: 48),
+                    IDroneLogoWidget(size: 48, backgroundColor: Color(0xFF061A13)),
                     SizedBox(width: 12),
                     Text(
                       'iDRONE',
