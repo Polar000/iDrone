@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../data/repositories/app_store.dart';
 import '../../data/models/idrone_models.dart';
+import '../../components/idrone_logo.dart';
 import '../../app/theme/app_colors.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -32,19 +33,7 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-                border: Border.all(color: AppColors.freshGreen, width: 2),
-              ),
-              child: const Icon(
-                Icons.radar_rounded,
-                size: 64,
-                color: AppColors.limeAccent,
-              ),
-            ),
+            const IDroneLogoWidget(size: 110),
             const SizedBox(height: 24),
             const Text(
               'iDRONE',
@@ -120,17 +109,10 @@ class _LoginScreenState extends State<LoginScreen> {
               children: [
                 const SizedBox(height: 30),
                 Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: AppColors.deepForest,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(Icons.radar_rounded, color: AppColors.limeAccent, size: 28),
-                    ),
-                    const SizedBox(width: 12),
-                    const Text(
+                  children: const [
+                    IDroneLogoWidget(size: 48),
+                    SizedBox(width: 12),
+                    Text(
                       'iDRONE',
                       style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: 2),
                     )

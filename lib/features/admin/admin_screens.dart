@@ -4,6 +4,7 @@ import '../../data/repositories/app_store.dart';
 import '../../data/models/idrone_models.dart';
 import '../../components/app_card.dart';
 import '../../components/app_badges_and_stats.dart';
+import '../../components/idrone_logo.dart';
 import '../../app/theme/app_colors.dart';
 import 'admin_calendar_screen.dart';
 
@@ -36,17 +37,10 @@ class _AdminDashboardLayoutState extends State<AdminDashboardLayout> {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: AppColors.freshGreen,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Icon(Icons.radar_rounded, color: AppColors.deepForest, size: 24),
-                      ),
-                      const SizedBox(width: 12),
-                      const Column(
+                    children: const [
+                      IDroneLogoWidget(size: 40),
+                      SizedBox(width: 12),
+                      Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text('iDRONE', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
