@@ -25,11 +25,6 @@ class _ParcelDrawScreenState extends State<ParcelDrawScreen> {
   String _selectedDepartment = 'Petén';
   bool _isSatellite = true;
 
-  @override
-  void initState() {
-    super.initState();
-  }
-
   void _onLocationChanged(String country, String department) {
     final coords = LocationData.countriesAndDepartments[country]?[department];
     if (coords != null) {
@@ -48,6 +43,11 @@ class _ParcelDrawScreenState extends State<ParcelDrawScreen> {
     }
     double sqMeters = (area.abs() / 2.0) * 111319.5 * 111319.5;
     return sqMeters / 10000.0;
+  }
+
+  double get _calculatedAreaManzanas {
+    // 1 Hectare = 1.4192 Manzanas in Guatemala (1 Mz = 0.7044 Ha or 7,044 m²)
+    return _calculatedAreaHectares * 1.4192;
   }
 
   double get _calculatedPerimeterMeters {
@@ -124,6 +124,7 @@ class _ParcelDrawScreenState extends State<ParcelDrawScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final isGuatemala = _selectedCountry == 'Guatemala';
 
     final initialCoords = LocationData.countriesAndDepartments[_selectedCountry]?[_selectedDepartment] ??
         const LatLng(16.9120, -89.8910);
@@ -315,13 +316,15 @@ class _ParcelDrawScreenState extends State<ParcelDrawScreen> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'ÁREA CALCULADA',
-                            style: TextStyle(fontSize: 11, color: AppColors.mutedText, fontWeight: FontWeight.bold),
+                          Text(
+                            isGuatemala ? 'ÁREA EN MANZANAS (GUATEMALA)' : 'ÁREA CALCULADA',
+                            style: const TextStyle(fontSize: 11, color: AppColors.mutedText, fontWeight: FontWeight.bold),
                           ),
                           Text(
-                            '${_calculatedAreaHectares.toStringAsFixed(2)} Ha',
-                            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.emerald),
+                            isGuatemala
+                                ? '${_calculatedAreaManzanas.toStringAsFixed(2)} Mz (${_calculatedAreaHectares.toStringAsFixed(2)} Ha)'
+                                : '${_calculatedAreaHectares.toStringAsFixed(2)} Ha',
+                            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.emerald),
                           ),
                         ],
                       ),

@@ -20,6 +20,7 @@ class ParcelMapPreviewCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final isGuatemala = parcel.locationName.contains('Guatemala');
 
     final LatLng center = parcel.points.isNotEmpty
         ? LatLng(parcel.points.first.latitude, parcel.points.first.longitude)
@@ -104,7 +105,9 @@ class ParcelMapPreviewCard extends StatelessWidget {
                             color: AppColors.limeAccent, size: 16),
                         const SizedBox(width: 4),
                         Text(
-                          '${parcel.areaHectares.toStringAsFixed(1)} Ha',
+                          isGuatemala
+                              ? '${(parcel.areaHectares * 1.4192).toStringAsFixed(1)} Mz (${parcel.areaHectares.toStringAsFixed(1)} Ha)'
+                              : '${parcel.areaHectares.toStringAsFixed(1)} Ha',
                           style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,

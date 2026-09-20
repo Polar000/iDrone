@@ -84,6 +84,8 @@ class _MisParcelasScreenState extends State<MisParcelasScreen> {
                     itemCount: filteredParcels.length,
                     itemBuilder: (context, index) {
                       final parcel = filteredParcels[index];
+                      final isGuatemala = parcel.locationName.contains('Guatemala');
+
                       return Container(
                         margin: const EdgeInsets.only(bottom: 16),
                         child: AppCard(
@@ -160,8 +162,10 @@ class _MisParcelasScreenState extends State<MisParcelasScreen> {
                                     icon: Icons.grass_rounded,
                                   ),
                                   _ParcelDetailChip(
-                                    label: 'Superficie',
-                                    value: '${parcel.areaHectares.toStringAsFixed(1)} Ha',
+                                    label: isGuatemala ? 'Superficie (Guatemala)' : 'Superficie',
+                                    value: isGuatemala
+                                        ? '${(parcel.areaHectares * 1.4192).toStringAsFixed(1)} Mz (${parcel.areaHectares.toStringAsFixed(1)} Ha)'
+                                        : '${parcel.areaHectares.toStringAsFixed(1)} Ha',
                                     icon: Icons.square_foot_rounded,
                                   ),
                                   _ParcelDetailChip(
