@@ -19,12 +19,18 @@ class ServiceTrackingScreen extends StatefulWidget {
 
 class _ServiceTrackingScreenState extends State<ServiceTrackingScreen> {
   double _progress = 45.0; // %
+  double _battery = 88.0; // %
+  double _altitude = 12.5; // meters
+  double _speed = 18.2; // km/h
+  bool _isSatellite = true;
+  bool _showNdviOverlay = false;
   LatLng _dronePos = const LatLng(19.4326, -99.1332);
 
   void _simulateProgress() {
     setState(() {
       _progress = (_progress + 15) > 100 ? 100 : _progress + 15;
-      _dronePos = LatLng(_dronePos.latitude + 0.001, _dronePos.longitude + 0.001);
+      _battery = (_battery - 5) < 10 ? 95 : _battery - 5;
+      _dronePos = LatLng(_dronePos.latitude + 0.0008, _dronePos.longitude + 0.0008);
     });
   }
 
@@ -44,21 +50,37 @@ class _ServiceTrackingScreenState extends State<ServiceTrackingScreen> {
       orElse: () => store.operators.first,
     );
 
+    final tileUrl = _isSatellite
+        ? 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+        : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+
     return Scaffold(
       appBar: AppBar(
-        title: Text('Seguimiento: #${widget.booking.id}'),
+        title: Text('Telemetría Radar: #${widget.booking.id}'),
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: Icon(_isSatellite ? Icons.map_rounded : Icons.satellite_alt_rounded),
+            onPressed: () => setState(() => _isSatellite = !_isSatellite),
+            tooltip: 'Alternar Vista Satelital',
+          ),
+          IconButton(
+            icon: Icon(Icons.sensors_rounded, color: _showNdviOverlay ? AppColors.limeAccent : null),
+            onPressed: () => setState(() => _showNdviOverlay = !_showNdviOverlay),
+            tooltip: 'Alternar Capa NDVI',
+          )
+        ],
       ),
       body: Stack(
         children: [
           FlutterMap(
             options: MapOptions(
               initialCenter: _dronePos,
-              initialZoom: 15.0,
+              initialZoom: 15.5,
             ),
             children: [
               TileLayer(
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                urlTemplate: tileUrl,
                 userAgentPackageName: 'com.idrone.app',
               ),
               if (parcel.points.length >= 3)
@@ -66,9 +88,11 @@ class _ServiceTrackingScreenState extends State<ServiceTrackingScreen> {
                   polygons: [
                     Polygon(
                       points: parcel.points.map((p) => LatLng(p.latitude, p.longitude)).toList(),
-                      color: AppColors.freshGreen.withValues(alpha: 0.3),
-                      borderColor: AppColors.deepForest,
-                      borderStrokeWidth: 2,
+                      color: _showNdviOverlay
+                          ? Colors.lightGreen.withValues(alpha: 0.5)
+                          : AppColors.freshGreen.withValues(alpha: 0.3),
+                      borderColor: _showNdviOverlay ? Colors.greenAccent : AppColors.deepForest,
+                      borderStrokeWidth: 3,
                     ),
                   ],
                 ),
@@ -76,16 +100,16 @@ class _ServiceTrackingScreenState extends State<ServiceTrackingScreen> {
                 markers: [
                   Marker(
                     point: _dronePos,
-                    width: 44,
-                    height: 44,
+                    width: 48,
+                    height: 48,
                     child: Container(
                       padding: const EdgeInsets.all(6),
                       decoration: const BoxDecoration(
                         color: AppColors.deepForest,
                         shape: BoxShape.circle,
-                        boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 8)],
+                        boxShadow: [BoxShadow(color: Colors.black38, blurRadius: 8)],
                       ),
-                      child: const Icon(Icons.radar_rounded, color: AppColors.limeAccent, size: 28),
+                      child: const Icon(Icons.radar_rounded, color: AppColors.limeAccent, size: 30),
                     ),
                   ),
                 ],
@@ -93,7 +117,27 @@ class _ServiceTrackingScreenState extends State<ServiceTrackingScreen> {
             ],
           ),
 
-          // Floating Operational Status
+          // Top Floating Telemetry Pills
+          Positioned(
+            top: 16,
+            left: 16,
+            right: 16,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _TelemetryPill(icon: Icons.battery_charging_full_rounded, label: '${_battery.toInt()}%', valueColor: AppColors.limeAccent),
+                _TelemetryPill(icon: Icons.height_rounded, label: '${_altitude}m Alt'),
+                _TelemetryPill(icon: Icons.speed_rounded, label: '${_speed} km/h'),
+                _TelemetryPill(
+                  icon: _showNdviOverlay ? Icons.grass_rounded : Icons.satellite_rounded,
+                  label: _showNdviOverlay ? 'NDVI: 0.82' : (_isSatellite ? 'Satelital' : 'Estándar'),
+                  valueColor: AppColors.freshGreen,
+                ),
+              ],
+            ),
+          ),
+
+          // Bottom Operational Status Sheet
           Positioned(
             bottom: 20,
             left: 16,
@@ -109,7 +153,7 @@ class _ServiceTrackingScreenState extends State<ServiceTrackingScreen> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('OPERACIÓN EN CURSO', style: TextStyle(fontSize: 11, color: AppColors.mutedText, fontWeight: FontWeight.bold)),
+                          const Text('TELEMETRÍA EN TIEMPO REAL', style: TextStyle(fontSize: 11, color: AppColors.mutedText, fontWeight: FontWeight.bold)),
                           Text(parcel.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                         ],
                       ),
@@ -121,15 +165,15 @@ class _ServiceTrackingScreenState extends State<ServiceTrackingScreen> {
                     children: [
                       const Icon(Icons.person_rounded, size: 16, color: AppColors.emerald),
                       const SizedBox(width: 6),
-                      Text('Operador: ${operator.name} (${operator.phone})', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+                      Text('Piloto: ${operator.name} (${operator.phone})', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
                     ],
                   ),
                   const SizedBox(height: 12),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Progreso: ${_progress.toInt()}%', style: const TextStyle(fontWeight: FontWeight.bold)),
-                      Text('Área: ${(parcel.areaHectares * (_progress / 100)).toStringAsFixed(1)} / ${parcel.areaHectares} Ha', style: const TextStyle(fontSize: 12, color: AppColors.mutedText)),
+                      Text('Avance Misión: ${_progress.toInt()}%', style: const TextStyle(fontWeight: FontWeight.bold)),
+                      Text('Cobertura: ${(parcel.areaHectares * (_progress / 100)).toStringAsFixed(1)} / ${parcel.areaHectares} Ha', style: const TextStyle(fontSize: 12, color: AppColors.mutedText)),
                     ],
                   ),
                   const SizedBox(height: 6),
@@ -139,13 +183,22 @@ class _ServiceTrackingScreenState extends State<ServiceTrackingScreen> {
                     valueColor: const AlwaysStoppedAnimation<Color>(AppColors.emerald),
                   ),
                   const SizedBox(height: 16),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: _simulateProgress,
-                      icon: const Icon(Icons.refresh_rounded),
-                      label: const Text('Simular Avance de Telemetría'),
-                    ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: _simulateProgress,
+                          icon: const Icon(Icons.refresh_rounded),
+                          label: const Text('Simular Paso Dron'),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      IconButton.filled(
+                        style: IconButton.styleFrom(backgroundColor: AppColors.deepForest, foregroundColor: AppColors.limeAccent),
+                        icon: Icon(_isSatellite ? Icons.map_rounded : Icons.satellite_alt_rounded),
+                        onPressed: () => setState(() => _isSatellite = !_isSatellite),
+                      ),
+                    ],
                   )
                 ],
               ),
@@ -157,14 +210,50 @@ class _ServiceTrackingScreenState extends State<ServiceTrackingScreen> {
   }
 }
 
+class _TelemetryPill extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color? valueColor;
+
+  const _TelemetryPill({
+    required this.icon,
+    required this.label,
+    this.valueColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: AppColors.deepForest.withValues(alpha: 0.9),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4)],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: valueColor ?? Colors.white),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              color: valueColor ?? Colors.white,
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class WeatherScreen extends StatelessWidget {
   const WeatherScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Condiciones Climáticas'),
@@ -189,17 +278,17 @@ class WeatherScreen extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             Row(
-              children: [
+              children: const [
                 Expanded(child: StatCard(title: 'VIENTO', value: '8 km/h', icon: Icons.air_rounded)),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 Expanded(child: StatCard(title: 'HUMEDAD', value: '45%', icon: Icons.water_drop_rounded)),
               ],
             ),
             const SizedBox(height: 12),
             Row(
-              children: [
+              children: const [
                 Expanded(child: StatCard(title: 'LLUVIA', value: '5%', icon: Icons.umbrella_rounded)),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 Expanded(child: StatCard(title: 'VISIBILIDAD', value: '10 km', icon: Icons.visibility_rounded)),
               ],
             ),

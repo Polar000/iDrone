@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../data/repositories/app_store.dart';
 import '../../data/models/idrone_models.dart';
 import '../../components/app_card.dart';
+import '../history/service_history_screen.dart';
 import '../../app/theme/app_colors.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -86,7 +87,27 @@ class ProfileScreen extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
+
+            // Navigation Options
+            AppCard(
+              child: Column(
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.history_rounded, color: AppColors.emerald),
+                    title: const Text('Historial de Servicios & Comprobantes'),
+                    trailing: const Icon(Icons.chevron_right_rounded),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const ServiceHistoryScreen()),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
 
             // Role Switcher Card
             Text(
@@ -101,7 +122,6 @@ class ProfileScreen extends StatelessWidget {
             AppCard(
               child: Column(
                 children: UserRole.values.map((role) {
-                  final isSelected = user.role == role;
                   return RadioListTile<UserRole>(
                     title: Text(role.displayName),
                     value: role,
@@ -116,7 +136,7 @@ class ProfileScreen extends StatelessWidget {
                 }).toList(),
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
 
             // Theme Preferences
             Text(

@@ -19,10 +19,10 @@ class _ParcelDrawScreenState extends State<ParcelDrawScreen> {
   final _nameController = TextEditingController();
   final _cropController = TextEditingController(text: 'Maíz');
   final MapController _mapController = MapController();
+  bool _isSatellite = true;
 
   double get _calculatedAreaHectares {
     if (_polygonPoints.length < 3) return 0.0;
-    // Standard Shoelace Polygon Area calculation for Lat/Lng approx
     double area = 0.0;
     int j = _polygonPoints.length - 1;
     for (int i = 0; i < _polygonPoints.length; i++) {
@@ -109,10 +109,19 @@ class _ParcelDrawScreenState extends State<ParcelDrawScreen> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
+    final tileUrl = _isSatellite
+        ? 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+        : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Trazar Parcela en Mapa'),
         actions: [
+          IconButton(
+            icon: Icon(_isSatellite ? Icons.map_rounded : Icons.satellite_alt_rounded),
+            onPressed: () => setState(() => _isSatellite = !_isSatellite),
+            tooltip: _isSatellite ? 'Cambiar a Mapa Estándar' : 'Cambiar a Satélite',
+          ),
           if (_polygonPoints.isNotEmpty)
             IconButton(
               icon: const Icon(Icons.undo_rounded),
@@ -138,7 +147,7 @@ class _ParcelDrawScreenState extends State<ParcelDrawScreen> {
             ),
             children: [
               TileLayer(
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                urlTemplate: tileUrl,
                 userAgentPackageName: 'com.idrone.app',
               ),
               if (_polygonPoints.length >= 3)
@@ -146,8 +155,8 @@ class _ParcelDrawScreenState extends State<ParcelDrawScreen> {
                   polygons: [
                     Polygon(
                       points: _polygonPoints,
-                      color: AppColors.freshGreen.withValues(alpha: 0.35),
-                      borderColor: AppColors.deepForest,
+                      color: AppColors.freshGreen.withValues(alpha: 0.4),
+                      borderColor: AppColors.limeAccent,
                       borderStrokeWidth: 3,
                     ),
                   ],
@@ -162,6 +171,7 @@ class _ParcelDrawScreenState extends State<ParcelDrawScreen> {
                       decoration: const BoxDecoration(
                         color: AppColors.deepForest,
                         shape: BoxShape.circle,
+                        boxShadow: [BoxShadow(color: Colors.black38, blurRadius: 4)],
                       ),
                       child: Center(
                         child: Text(
@@ -180,29 +190,43 @@ class _ParcelDrawScreenState extends State<ParcelDrawScreen> {
             ],
           ),
 
-          // Top Instruction Card
+          // Top Instruction Card & Map Mode Toggle Badge
           Positioned(
             top: 16,
             left: 16,
             right: 16,
-            child: Card(
-              color: isDark ? AppColors.darkSurface : Colors.white,
-              elevation: 4,
-              child: const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                child: Row(
-                  children: [
-                    Icon(Icons.touch_app_rounded, color: AppColors.emerald),
-                    SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        'Toca en el mapa para añadir vértices y delimitar el terreno.',
-                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Card(
+                    color: isDark ? AppColors.darkSurface : Colors.white,
+                    elevation: 4,
+                    child: const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      child: Row(
+                        children: [
+                          Icon(Icons.touch_app_rounded, color: AppColors.emerald, size: 20),
+                          SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              'Toca en el mapa para delimitar vértices.',
+                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ],
+                  ),
                 ),
-              ),
+                const SizedBox(width: 8),
+                FloatingActionButton.small(
+                  heroTag: 'map_type_btn',
+                  backgroundColor: AppColors.deepForest,
+                  foregroundColor: AppColors.limeAccent,
+                  onPressed: () => setState(() => _isSatellite = !_isSatellite),
+                  child: Icon(_isSatellite ? Icons.map_rounded : Icons.satellite_alt_rounded),
+                ),
+              ],
             ),
           ),
 
