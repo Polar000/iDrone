@@ -1,7 +1,27 @@
 import 'package:flutter/material.dart';
 import '../models/idrone_models.dart';
 
+class PlatformSettings {
+  double depositPercentage; // e.g. 0.25 (25%)
+  String activePromoCoupon;
+  double promoDiscountAmount;
+  String heroBannerImageUrl;
+  String readinessDisclaimerText;
+
+  PlatformSettings({
+    this.depositPercentage = 0.25,
+    this.activePromoCoupon = 'CAMPO2026',
+    this.promoDiscountAmount = 1500.0,
+    this.heroBannerImageUrl = 'https://images.unsplash.com/photo-1508614589041-895b88991e3e',
+    this.readinessDisclaimerText =
+        'El cliente confirma que tendrá el agua limpia y los productos/insumos agrícolas listos en la parcela al momento de llegada del dron.',
+  });
+}
+
 class AppStore extends ChangeNotifier {
+  // Global Platform Parametrization Settings
+  final PlatformSettings platformSettings = PlatformSettings();
+
   // Current logged in user & Theme
   UserModel _currentUser = UserModel(
     id: 'user_001',
@@ -20,6 +40,41 @@ class AppStore extends ChangeNotifier {
   void setThemeMode(ThemeMode mode) {
     _themeMode = mode;
     notifyListeners();
+  }
+
+  void updatePlatformSettings({
+    double? depositPercentage,
+    String? activePromoCoupon,
+    double? promoDiscountAmount,
+    String? heroBannerImageUrl,
+    String? readinessDisclaimerText,
+  }) {
+    if (depositPercentage != null) platformSettings.depositPercentage = depositPercentage;
+    if (activePromoCoupon != null) platformSettings.activePromoCoupon = activePromoCoupon;
+    if (promoDiscountAmount != null) platformSettings.promoDiscountAmount = promoDiscountAmount;
+    if (heroBannerImageUrl != null) platformSettings.heroBannerImageUrl = heroBannerImageUrl;
+    if (readinessDisclaimerText != null) platformSettings.readinessDisclaimerText = readinessDisclaimerText;
+    _logAudit('Parametrización global actualizada por Admin', 'Configuración');
+    notifyListeners();
+  }
+
+  void updateServicePrice(String serviceId, double newBasePrice) {
+    final idx = _services.indexWhere((s) => s.id == serviceId);
+    if (idx != -1) {
+      final old = _services[idx];
+      _services[idx] = ServiceModel(
+        id: old.id,
+        name: old.name,
+        description: old.description,
+        basePricePerHectare: newBasePrice,
+        iconName: old.iconName,
+        imageUrl: old.imageUrl,
+        estimatedDuration: old.estimatedDuration,
+        isAvailable: old.isAvailable,
+      );
+      _logAudit('Precio de servicio ${old.name} actualizado a \$$newBasePrice/Ha', 'Tarifas');
+      notifyListeners();
+    }
   }
 
   void switchUserRole(UserRole newRole) {
@@ -69,12 +124,12 @@ class AppStore extends ChangeNotifier {
       cropType: 'Maíz',
       areaHectares: 120.5,
       perimeterMeters: 4500.0,
-      locationName: 'Valle Central, Sector A',
+      locationName: 'Petén, Guatemala',
       points: [
-        ParcelPoint(latitude: 19.4326, longitude: -99.1332),
-        ParcelPoint(latitude: 19.4350, longitude: -99.1300),
-        ParcelPoint(latitude: 19.4300, longitude: -99.1250),
-        ParcelPoint(latitude: 19.4280, longitude: -99.1310),
+        ParcelPoint(latitude: 16.9120, longitude: -89.8910),
+        ParcelPoint(latitude: 16.9150, longitude: -89.8850),
+        ParcelPoint(latitude: 16.9100, longitude: -89.8800),
+        ParcelPoint(latitude: 16.9080, longitude: -89.8860),
       ],
       createdAt: DateTime.now().subtract(const Duration(days: 15)),
     ),
@@ -85,7 +140,7 @@ class AppStore extends ChangeNotifier {
       cropType: 'Agave Azul',
       areaHectares: 85.0,
       perimeterMeters: 3200.0,
-      locationName: 'Jalisco Norte',
+      locationName: 'Jalisco, México',
       points: [
         ParcelPoint(latitude: 20.6597, longitude: -103.3496),
         ParcelPoint(latitude: 20.6620, longitude: -103.3450),
@@ -181,7 +236,7 @@ class AppStore extends ChangeNotifier {
       status: BookingStatus.confirmed,
       operatorId: 'op_101',
       droneId: 'dr_03',
-      notes: 'Aplicar temprano por la mañana',
+      notes: 'Producto: Fungicida Karate 500ml/Ha (Cliente provee agua y producto)',
       createdAt: DateTime.now().subtract(const Duration(hours: 12)),
     ),
   ];
@@ -269,7 +324,7 @@ class AppStore extends ChangeNotifier {
       id: 'notif_1',
       userId: 'user_001',
       title: 'Bienvenido a iDrone',
-      message: 'Gestiona tus cultivos y solicita servicios de drones con tecnología de punta.',
+      message: 'Gestiona tus cultivos y solicita servicios de aplicación aérea con drones.',
       createdAt: DateTime.now().subtract(const Duration(days: 2)),
       isRead: false,
     ),

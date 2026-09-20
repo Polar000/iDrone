@@ -123,8 +123,10 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
   ServiceModel? _selectedService;
   ParcelModel? _selectedParcel;
   String _selectedCrop = 'Maíz';
+  final _clientProductNameCtrl = TextEditingController(text: 'Fungicida Karate 500ml/Ha');
+  bool _hasWaterAndProductsReady = true;
   DateTime _selectedDate = DateTime.now().add(const Duration(days: 2));
-  String _paymentOption = 'deposit'; // 'deposit' (25%) or 'full' (100%)
+  String _paymentOption = 'deposit'; // 'deposit' or 'full'
 
   @override
   void initState() {
@@ -145,6 +147,20 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
       );
       return;
     }
+    if (_currentStep == 2) {
+      if (_clientProductNameCtrl.text.trim().isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Por favor indica el nombre del producto que tú proveerás')),
+        );
+        return;
+      }
+      if (!_hasWaterAndProductsReady) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Debes confirmar que tendrás el agua e insumos listos en terreno')),
+        );
+        return;
+      }
+    }
 
     if (_currentStep < 4) {
       setState(() => _currentStep++);
@@ -164,9 +180,10 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
 
     final hectares = _selectedParcel!.areaHectares;
     final subtotal = store.calculateQuoteSubtotal(_selectedService!.id, hectares);
-    final discount = hectares > 100 ? 1500.0 : 0.0;
+    final discount = hectares > 100 ? store.platformSettings.promoDiscountAmount : 0.0;
     final total = subtotal - discount;
-    final paidAmount = _paymentOption == 'deposit' ? total * 0.25 : total;
+    final depPct = store.platformSettings.depositPercentage;
+    final paidAmount = _paymentOption == 'deposit' ? total * depPct : total;
 
     final newBooking = BookingModel(
       id: 'bk_${DateTime.now().millisecondsSinceEpoch}',
@@ -181,6 +198,7 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
       total: total,
       paidAmount: paidAmount,
       status: BookingStatus.confirmed,
+      notes: 'Producto propio: ${_clientProductNameCtrl.text.trim()} (Agua e insumos del cliente en terreno)',
       createdAt: DateTime.now(),
     );
 
@@ -199,7 +217,7 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
         ),
         content: Text(
           'Tu servicio de ${_selectedService!.name} ha sido reservado con éxito. '
-          'Pago registrado: \$${paidAmount.toStringAsFixed(2)} MXN.',
+          'Monto pagado (${_paymentOption == 'deposit' ? '${(depPct * 100).toInt()}% anticipo' : '100%'}): \$${paidAmount.toStringAsFixed(2)} MXN.',
         ),
         actions: [
           ElevatedButton(
@@ -356,11 +374,49 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('3. Fecha de Operación', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            const Text('3. Insumos y Producto Propio', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.softGreen,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.info_outline_rounded, color: AppColors.deepForest),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'La empresa presta el servicio de aplicación aérea con dron. El cliente debe contar con el producto y el agua limpia en la parcela.',
+                      style: TextStyle(color: AppColors.deepForest, fontSize: 12, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _clientProductNameCtrl,
+              decoration: const InputDecoration(
+                labelText: 'Nombre del Producto Propio a Aplicar',
+                hintText: 'Ej. Fungicida Karate 500ml/Ha',
+                prefixIcon: Icon(Icons.science_rounded),
+              ),
+            ),
+            const SizedBox(height: 16),
+            CheckboxListTile(
+              activeColor: AppColors.emerald,
+              title: const Text('Confirmo que tendré el agua limpia y el producto listos en terreno', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+              value: _hasWaterAndProductsReady,
+              onChanged: (val) => setState(() => _hasWaterAndProductsReady = val ?? false),
+            ),
             const SizedBox(height: 16),
             AppCard(
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  const Text('Selecciona la Fecha Programada:', style: TextStyle(fontWeight: FontWeight.bold)),
                   CalendarDatePicker(
                     initialDate: _selectedDate,
                     firstDate: DateTime.now(),
@@ -376,7 +432,7 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
       case 3:
         final hectares = _selectedParcel?.areaHectares ?? 0.0;
         final subtotal = store.calculateQuoteSubtotal(_selectedService!.id, hectares);
-        final discount = hectares > 100 ? 1500.0 : 0.0;
+        final discount = hectares > 100 ? store.platformSettings.promoDiscountAmount : 0.0;
         final total = subtotal - discount;
 
         return Column(
@@ -390,6 +446,7 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
                 children: [
                   _SummaryRow(label: 'Servicio', value: _selectedService!.name),
                   _SummaryRow(label: 'Parcela', value: _selectedParcel!.name),
+                  _SummaryRow(label: 'Producto del Cliente', value: _clientProductNameCtrl.text.trim()),
                   _SummaryRow(label: 'Área Total', value: '${hectares.toStringAsFixed(1)} Hectáreas'),
                   _SummaryRow(label: 'Tarifa Base', value: '\$${_selectedService!.basePricePerHectare}/Ha'),
                   const Divider(height: 24),
@@ -413,8 +470,9 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
       default:
         final hectares = _selectedParcel?.areaHectares ?? 0.0;
         final subtotal = store.calculateQuoteSubtotal(_selectedService!.id, hectares);
-        final discount = hectares > 100 ? 1500.0 : 0.0;
+        final discount = hectares > 100 ? store.platformSettings.promoDiscountAmount : 0.0;
         final total = subtotal - discount;
+        final depPct = store.platformSettings.depositPercentage;
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -432,9 +490,9 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Reservar con Depósito 25%', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                        Text('\$${(total * 0.25).toStringAsFixed(2)} MXN hoy', style: const TextStyle(color: AppColors.emerald, fontWeight: FontWeight.bold)),
-                        const Text('Paga el 75% restante al finalizar la operación', style: TextStyle(fontSize: 12, color: AppColors.mutedText)),
+                        Text('Reservar con Depósito ${(depPct * 100).toInt()}%', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                        Text('\$${(total * depPct).toStringAsFixed(2)} MXN hoy', style: const TextStyle(color: AppColors.emerald, fontWeight: FontWeight.bold)),
+                        Text('Paga el ${((1.0 - depPct) * 100).toInt()}% restante al finalizar la operación', style: const TextStyle(fontSize: 12, color: AppColors.mutedText)),
                       ],
                     ),
                   )

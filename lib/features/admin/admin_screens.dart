@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../data/repositories/app_store.dart';
-import '../../data/models/idrone_models.dart';
 import '../../components/app_card.dart';
 import '../../components/app_badges_and_stats.dart';
 import '../../components/idrone_logo.dart';
@@ -62,34 +61,40 @@ class _AdminDashboardLayoutState extends State<AdminDashboardLayout> {
                   onTap: () => setState(() => _selectedNavIndex = 0),
                 ),
                 _SidebarItem(
-                  icon: Icons.calendar_month_rounded,
-                  label: 'Calendario y Permisos',
+                  icon: Icons.tune_rounded,
+                  label: 'Parametrización & Tarifas',
                   isSelected: _selectedNavIndex == 1,
                   onTap: () => setState(() => _selectedNavIndex = 1),
                 ),
                 _SidebarItem(
-                  icon: Icons.assignment_rounded,
-                  label: 'Servicios y Reservas',
+                  icon: Icons.calendar_month_rounded,
+                  label: 'Calendario y Permisos',
                   isSelected: _selectedNavIndex == 2,
                   onTap: () => setState(() => _selectedNavIndex = 2),
                 ),
                 _SidebarItem(
-                  icon: Icons.flight_rounded,
-                  label: 'Drones y Flota',
+                  icon: Icons.assignment_rounded,
+                  label: 'Servicios y Reservas',
                   isSelected: _selectedNavIndex == 3,
                   onTap: () => setState(() => _selectedNavIndex = 3),
                 ),
                 _SidebarItem(
-                  icon: Icons.people_rounded,
-                  label: 'CRM Clientes',
+                  icon: Icons.flight_rounded,
+                  label: 'Drones y Flota',
                   isSelected: _selectedNavIndex == 4,
                   onTap: () => setState(() => _selectedNavIndex = 4),
                 ),
                 _SidebarItem(
-                  icon: Icons.security_rounded,
-                  label: 'Auditoría & Logs',
+                  icon: Icons.people_rounded,
+                  label: 'CRM Clientes',
                   isSelected: _selectedNavIndex == 5,
                   onTap: () => setState(() => _selectedNavIndex = 5),
+                ),
+                _SidebarItem(
+                  icon: Icons.security_rounded,
+                  label: 'Auditoría & Logs',
+                  isSelected: _selectedNavIndex == 6,
+                  onTap: () => setState(() => _selectedNavIndex = 6),
                 ),
               ],
             ),
@@ -139,6 +144,7 @@ class _AdminDashboardLayoutState extends State<AdminDashboardLayout> {
                     index: _selectedNavIndex,
                     children: const [
                       _AdminMetricsView(),
+                      AdminSettingsScreen(),
                       AdminCalendarAndFleetScreen(),
                       _AdminBookingsView(),
                       _AdminFleetView(),
@@ -190,6 +196,194 @@ class _SidebarItem extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class AdminSettingsScreen extends StatefulWidget {
+  const AdminSettingsScreen({super.key});
+
+  @override
+  State<AdminSettingsScreen> createState() => _AdminSettingsScreenState();
+}
+
+class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
+  final _depositController = TextEditingController();
+  final _couponController = TextEditingController();
+  final _discountController = TextEditingController();
+  final _disclaimerController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    final store = Provider.of<AppStore>(context, listen: false);
+    _depositController.text = (store.platformSettings.depositPercentage * 100).toStringAsFixed(0);
+    _couponController.text = store.platformSettings.activePromoCoupon;
+    _discountController.text = store.platformSettings.promoDiscountAmount.toStringAsFixed(0);
+    _disclaimerController.text = store.platformSettings.readinessDisclaimerText;
+  }
+
+  void _saveParametrization() {
+    final store = Provider.of<AppStore>(context, listen: false);
+    final depPct = double.tryParse(_depositController.text.trim());
+    final discAmt = double.tryParse(_discountController.text.trim());
+
+    store.updatePlatformSettings(
+      depositPercentage: depPct != null ? depPct / 100.0 : null,
+      activePromoCoupon: _couponController.text.trim(),
+      promoDiscountAmount: discAmt,
+      readinessDisclaimerText: _disclaimerController.text.trim(),
+    );
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('¡Parametrización global actualizada con éxito!')),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final store = Provider.of<AppStore>(context);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Consola de Parametrización Central', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                  Text('Modifica tarifas base, porcentajes de anticipo y reglas de servicio en tiempo real.', style: TextStyle(color: isDark ? AppColors.darkTextMuted : AppColors.mutedText, fontSize: 13)),
+                ],
+              ),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.emerald,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                ),
+                onPressed: _saveParametrization,
+                icon: const Icon(Icons.save_rounded),
+                label: const Text('Guardar Cambios', style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+
+          // Tariffs per Service
+          AppCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Tarifas Base por Hectárea (\$/Ha)', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 16),
+                ...store.services.map((srv) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          flex: 2,
+                          child: Text(srv.name, style: const TextStyle(fontWeight: FontWeight.w600)),
+                        ),
+                        Expanded(
+                          child: TextFormField(
+                            initialValue: srv.basePricePerHectare.toStringAsFixed(0),
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(
+                              prefixText: '\$ ',
+                              suffixText: 'MXN',
+                              isDense: true,
+                            ),
+                            onChanged: (val) {
+                              final p = double.tryParse(val);
+                              if (p != null) {
+                                store.updateServicePrice(srv.id, p);
+                              }
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // Payment & Anticipo Config
+          AppCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Configuración de Pagos y Anticipo', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _depositController,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                          labelText: 'Porcentaje de Anticipo Requerido',
+                          suffixText: '%',
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: TextField(
+                        controller: _couponController,
+                        decoration: const InputDecoration(
+                          labelText: 'Cupón Promocional Activo',
+                          prefixIcon: Icon(Icons.confirmation_number_rounded),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: TextField(
+                        controller: _discountController,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                          labelText: 'Monto Descuento Promocional',
+                          prefixText: '\$ ',
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // Disclaimer & Client Responsibility
+          AppCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Declaración de Responsabilidad del Cliente (Agua e Insumos)', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _disclaimerController,
+                  maxLines: 3,
+                  decoration: const InputDecoration(
+                    labelText: 'Texto Legal de Confirmación',
+                    hintText: 'Texto con el que el cliente declara que tendrá los productos y el agua listos.',
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
