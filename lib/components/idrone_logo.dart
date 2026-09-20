@@ -83,11 +83,9 @@ class _DronePainter extends CustomPainter {
       canvas.drawLine(Offset(cx, cy), Offset(armX, armY), strokePaint);
 
       // Inward facing C-ring arc:
-      // Opening/gap is centered towards (cx, cy), which is `angle + pi`.
-      // Sweep is 270 deg (1.5 * pi), leaving a 90 deg gap facing inwards.
       final gapCenter = angle + pi;
-      final startAngle = gapCenter + pi / 4; // 45 deg past gap center
-      const sweepAngle = 1.5 * pi; // 270 degrees sweep
+      final startAngle = gapCenter + pi / 4;
+      const sweepAngle = 1.5 * pi;
 
       canvas.drawArc(
         Rect.fromCircle(center: Offset(armX, armY), radius: propRadius),

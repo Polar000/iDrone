@@ -5,6 +5,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 import '../../data/repositories/app_store.dart';
 import '../../data/models/idrone_models.dart';
+import '../../core/constants/location_data.dart';
 import '../../app/theme/app_colors.dart';
 
 class ParcelDrawScreen extends StatefulWidget {
@@ -19,7 +20,22 @@ class _ParcelDrawScreenState extends State<ParcelDrawScreen> {
   final _nameController = TextEditingController();
   final _cropController = TextEditingController(text: 'Maíz');
   final MapController _mapController = MapController();
+
+  String _selectedCountry = 'Guatemala';
+  String _selectedDepartment = 'Petén';
   bool _isSatellite = true;
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  void _onLocationChanged(String country, String department) {
+    final coords = LocationData.countriesAndDepartments[country]?[department];
+    if (coords != null) {
+      _mapController.move(coords, 13.5);
+    }
+  }
 
   double get _calculatedAreaHectares {
     if (_polygonPoints.length < 3) return 0.0;
@@ -95,7 +111,7 @@ class _ParcelDrawScreenState extends State<ParcelDrawScreen> {
       cropType: _cropController.text.trim(),
       areaHectares: double.parse(_calculatedAreaHectares.toStringAsFixed(2)),
       perimeterMeters: double.parse(_calculatedPerimeterMeters.toStringAsFixed(1)),
-      locationName: 'Ubicación trazada en mapa',
+      locationName: '$_selectedDepartment, $_selectedCountry',
       points: _polygonPoints.map((p) => ParcelPoint(latitude: p.latitude, longitude: p.longitude)).toList(),
       createdAt: DateTime.now(),
     );
@@ -109,9 +125,14 @@ class _ParcelDrawScreenState extends State<ParcelDrawScreen> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
+    final initialCoords = LocationData.countriesAndDepartments[_selectedCountry]?[_selectedDepartment] ??
+        const LatLng(16.9120, -89.8910);
+
     final tileUrl = _isSatellite
         ? 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
         : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+
+    final departmentOptions = LocationData.countriesAndDepartments[_selectedCountry]?.keys.toList() ?? [];
 
     return Scaffold(
       appBar: AppBar(
@@ -141,8 +162,8 @@ class _ParcelDrawScreenState extends State<ParcelDrawScreen> {
           FlutterMap(
             mapController: _mapController,
             options: MapOptions(
-              initialCenter: const LatLng(19.4326, -99.1332),
-              initialZoom: 14.0,
+              initialCenter: initialCoords,
+              initialZoom: 13.5,
               onTap: _onTapMap,
             ),
             children: [
@@ -155,7 +176,7 @@ class _ParcelDrawScreenState extends State<ParcelDrawScreen> {
                   polygons: [
                     Polygon(
                       points: _polygonPoints,
-                      color: AppColors.freshGreen.withValues(alpha: 0.4),
+                      color: AppColors.freshGreen.withValues(alpha: 0.45),
                       borderColor: AppColors.limeAccent,
                       borderStrokeWidth: 3,
                     ),
@@ -190,43 +211,79 @@ class _ParcelDrawScreenState extends State<ParcelDrawScreen> {
             ],
           ),
 
-          // Top Instruction Card & Map Mode Toggle Badge
+          // Country & Department Selector Header
           Positioned(
-            top: 16,
-            left: 16,
-            right: 16,
-            child: Row(
-              children: [
-                Expanded(
-                  child: Card(
-                    color: isDark ? AppColors.darkSurface : Colors.white,
-                    elevation: 4,
-                    child: const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                      child: Row(
-                        children: [
-                          Icon(Icons.touch_app_rounded, color: AppColors.emerald, size: 20),
-                          SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              'Toca en el mapa para delimitar vértices.',
-                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+            top: 12,
+            left: 12,
+            right: 12,
+            child: Card(
+              color: isDark ? AppColors.darkSurface : Colors.white,
+              elevation: 6,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.public_rounded, color: AppColors.emerald, size: 20),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              isExpanded: true,
+                              value: _selectedCountry,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: isDark ? Colors.white : AppColors.darkText,
+                              ),
+                              items: LocationData.countriesAndDepartments.keys.map((c) {
+                                return DropdownMenuItem(value: c, child: Text('País: $c'));
+                              }).toList(),
+                              onChanged: (val) {
+                                if (val != null) {
+                                  setState(() {
+                                    _selectedCountry = val;
+                                    _selectedDepartment = LocationData.countriesAndDepartments[val]!.keys.first;
+                                    _onLocationChanged(_selectedCountry, _selectedDepartment);
+                                  });
+                                }
+                              },
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              isExpanded: true,
+                              value: _selectedDepartment,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: isDark ? Colors.white : AppColors.darkText,
+                              ),
+                              items: departmentOptions.map((d) {
+                                return DropdownMenuItem(value: d, child: Text('Dept/Estado: $d'));
+                              }).toList(),
+                              onChanged: (val) {
+                                if (val != null) {
+                                  setState(() {
+                                    _selectedDepartment = val;
+                                    _onLocationChanged(_selectedCountry, _selectedDepartment);
+                                  });
+                                }
+                              },
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
+                  ],
                 ),
-                const SizedBox(width: 8),
-                FloatingActionButton.small(
-                  heroTag: 'map_type_btn',
-                  backgroundColor: AppColors.deepForest,
-                  foregroundColor: AppColors.limeAccent,
-                  onPressed: () => setState(() => _isSatellite = !_isSatellite),
-                  child: Icon(_isSatellite ? Icons.map_rounded : Icons.satellite_alt_rounded),
-                ),
-              ],
+              ),
             ),
           ),
 

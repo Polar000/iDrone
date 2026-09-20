@@ -4,6 +4,7 @@ import '../../data/repositories/app_store.dart';
 import '../../data/models/idrone_models.dart';
 import '../../components/app_card.dart';
 import '../../components/app_states.dart';
+import '../../components/parcel_map_preview_card.dart';
 import '../../app/theme/app_colors.dart';
 import 'parcel_draw_screen.dart';
 
@@ -32,7 +33,7 @@ class _MisParcelasScreenState extends State<MisParcelasScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Mis Parcelas'),
+        title: const Text('Mis Parcelas Mapeadas'),
         elevation: 0,
         actions: [
           IconButton(
@@ -84,46 +85,38 @@ class _MisParcelasScreenState extends State<MisParcelasScreen> {
                     itemBuilder: (context, index) {
                       final parcel = filteredParcels[index];
                       return Container(
-                        margin: const EdgeInsets.only(bottom: 12),
+                        margin: const EdgeInsets.only(bottom: 16),
                         child: AppCard(
+                          padding: const EdgeInsets.all(12),
                           onTap: widget.onSelectParcel != null
                               ? () => widget.onSelectParcel!(parcel)
                               : null,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
+                              // Visual Parcel Polygon Snapshot
+                              ParcelMapPreviewCard(parcel: parcel, height: 160),
+                              const SizedBox(height: 12),
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Row(
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Container(
-                                        padding: const EdgeInsets.all(8),
-                                        decoration: BoxDecoration(
-                                          color: AppColors.softGreen,
-                                          borderRadius: BorderRadius.circular(10),
+                                      Text(
+                                        parcel.name,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 18,
                                         ),
-                                        child: const Icon(Icons.landscape_rounded, color: AppColors.deepForest),
                                       ),
-                                      const SizedBox(width: 12),
-                                      Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            parcel.name,
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 16,
-                                            ),
-                                          ),
-                                          Text(
-                                            parcel.locationName,
-                                            style: TextStyle(
-                                              color: isDark ? AppColors.darkTextMuted : AppColors.mutedText,
-                                              fontSize: 12,
-                                            ),
-                                          ),
-                                        ],
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        parcel.locationName,
+                                        style: TextStyle(
+                                          color: isDark ? AppColors.darkTextMuted : AppColors.mutedText,
+                                          fontSize: 13,
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -157,7 +150,7 @@ class _MisParcelasScreenState extends State<MisParcelasScreen> {
                                   ),
                                 ],
                               ),
-                              const Divider(height: 24),
+                              const Divider(height: 20),
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
@@ -167,13 +160,13 @@ class _MisParcelasScreenState extends State<MisParcelasScreen> {
                                     icon: Icons.grass_rounded,
                                   ),
                                   _ParcelDetailChip(
-                                    label: 'Área',
+                                    label: 'Superficie',
                                     value: '${parcel.areaHectares.toStringAsFixed(1)} Ha',
                                     icon: Icons.square_foot_rounded,
                                   ),
                                   _ParcelDetailChip(
-                                    label: 'Puntos Map',
-                                    value: '${parcel.points.length} Vértices',
+                                    label: 'Vértices',
+                                    value: '${parcel.points.length} Puntos',
                                     icon: Icons.pin_drop_rounded,
                                   ),
                                 ],
