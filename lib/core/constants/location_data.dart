@@ -1,6 +1,53 @@
 import 'package:latlong2/latlong.dart';
 
+class CountryConfig {
+  final String name;
+  final String currencyCode;
+  final String currencySymbol;
+  final String areaUnitName;
+  final double areaConversionRatioToHectare; // e.g. 1 Ha = 1.4192 Mz -> 1 Mz = 0.7044 Ha
+
+  const CountryConfig({
+    required this.name,
+    required this.currencyCode,
+    required this.currencySymbol,
+    required this.areaUnitName,
+    required this.areaConversionRatioToHectare,
+  });
+}
+
 class LocationData {
+  static const Map<String, CountryConfig> countryConfigs = {
+    'Guatemala': CountryConfig(
+      name: 'Guatemala',
+      currencyCode: 'GTQ',
+      currencySymbol: 'Q',
+      areaUnitName: 'Manzanas (Mz)',
+      areaConversionRatioToHectare: 1.4192,
+    ),
+    'México': CountryConfig(
+      name: 'México',
+      currencyCode: 'MXN',
+      currencySymbol: '\$',
+      areaUnitName: 'Hectáreas (Ha)',
+      areaConversionRatioToHectare: 1.0,
+    ),
+    'Colombia': CountryConfig(
+      name: 'Colombia',
+      currencyCode: 'COP',
+      currencySymbol: '\$',
+      areaUnitName: 'Hectáreas (Ha)',
+      areaConversionRatioToHectare: 1.0,
+    ),
+    'Argentina': CountryConfig(
+      name: 'Argentina',
+      currencyCode: 'ARS',
+      currencySymbol: '\$',
+      areaUnitName: 'Hectáreas (Ha)',
+      areaConversionRatioToHectare: 1.0,
+    ),
+  };
+
   static const Map<String, Map<String, LatLng>> countriesAndDepartments = {
     'Guatemala': {
       'Guatemala (Capital)': LatLng(14.6349, -90.5069),
