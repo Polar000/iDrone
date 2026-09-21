@@ -13,7 +13,7 @@ class AppTheme {
     colorScheme: const ColorScheme.light(
       primary: AppColors.deepForest,
       secondary: AppColors.emerald,
-      tertiary: AppColors.limeAccent,
+      tertiary: AppColors.freshGreen,
       surface: Colors.white,
       error: AppColors.errorRed,
       onPrimary: Colors.white,
@@ -29,7 +29,7 @@ class AppTheme {
     cardTheme: CardThemeData(
       color: Colors.white,
       elevation: 2,
-      shadowColor: AppColors.deepForest.withValues(alpha: 0.08),
+      shadowColor: AppColors.deepForest.withValues(alpha: 0.06),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
@@ -38,7 +38,7 @@ class AppTheme {
         foregroundColor: Colors.white,
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+        textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
       ),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
@@ -76,8 +76,8 @@ class AppTheme {
     scaffoldBackgroundColor: AppColors.darkBackground,
     colorScheme: const ColorScheme.dark(
       primary: AppColors.emerald,
-      secondary: AppColors.limeAccent,
-      tertiary: AppColors.freshGreen,
+      secondary: AppColors.freshGreen,
+      tertiary: AppColors.limeAccent,
       surface: AppColors.darkSurface,
       error: AppColors.errorRed,
       onPrimary: AppColors.darkBackground,
@@ -110,7 +110,7 @@ class AppTheme {
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
-        foregroundColor: AppColors.limeAccent,
+        foregroundColor: AppColors.emerald,
         side: const BorderSide(color: AppColors.emerald, width: 1.5),
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -131,7 +131,7 @@ class AppTheme {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.limeAccent, width: 2),
+        borderSide: const BorderSide(color: AppColors.emerald, width: 2),
       ),
     ),
   );

@@ -3,19 +3,19 @@ import 'package:flutter/material.dart';
 class AppColors {
   AppColors._();
 
-  // Primary iDrone Brand Palette
-  static const Color deepForest = Color(0xFF063F35);
-  static const Color forest = Color(0xFF087A5F);
-  static const Color emerald = Color(0xFF159A6B);
-  static const Color freshGreen = Color(0xFF8DDE3F);
-  static const Color limeAccent = Color(0xFFC8F45A);
+  // Option D: SaaS Empresarial Brand Palette
+  static const Color deepForest = Color(0xFF044E3A); // Primary Bottle Green
+  static const Color forest = Color(0xFF065F46); // Secondary Forest Green
+  static const Color emerald = Color(0xFF10B981); // Emerald Accent
+  static const Color freshGreen = Color(0xFF34D399); // Fresh Green Accent
+  static const Color limeAccent = Color(0xFFA7F3D0); // Soft Lime Mint Accent
 
   // Surface & Neutral
-  static const Color cream = Color(0xFFF7F8F2);
-  static const Color softGreen = Color(0xFFE8F4EC);
-  static const Color earth = Color(0xFF8A7659);
-  static const Color darkText = Color(0xFF172033);
-  static const Color mutedText = Color(0xFF6B7280);
+  static const Color cream = Color(0xFFFFFFFF); // Pure White Background
+  static const Color softGreen = Color(0xFFE6F4ED); // Mint Soft Background
+  static const Color earth = Color(0xFF92400E);
+  static const Color darkText = Color(0xFF0F172A); // Dark Slate Text
+  static const Color mutedText = Color(0xFF64748B); // Muted Slate Text
 
   // Status & Accents
   static const Color alertOrange = Color(0xFFF59E0B);
