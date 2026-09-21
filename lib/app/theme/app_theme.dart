@@ -29,7 +29,7 @@ class AppTheme {
     cardTheme: CardThemeData(
       color: Colors.white,
       elevation: 2,
-      shadowColor: AppColors.deepForest.withValues(alpha: 0.06),
+      shadowColor: AppColors.deepForest.withOpacity(0.06),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
@@ -93,7 +93,7 @@ class AppTheme {
     cardTheme: CardThemeData(
       color: AppColors.darkSurface,
       elevation: 4,
-      shadowColor: Colors.black.withValues(alpha: 0.3),
+      shadowColor: Colors.black.withOpacity(0.3),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: const BorderSide(color: AppColors.darkBorder, width: 1),

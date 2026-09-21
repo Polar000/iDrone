@@ -32,7 +32,7 @@ class AppTheme {
           fontFamily: 'Inter',
         ),
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: Colors.white,
         elevation: 2,
         shadowColor: AppColors.deepForest.withOpacity(0.08),
@@ -72,7 +72,7 @@ class AppTheme {
           fontFamily: 'Inter',
         ),
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: AppColors.darkSurface,
         elevation: 4,
         shadowColor: Colors.black.withOpacity(0.3),
