@@ -5,6 +5,7 @@ import '../../data/models/idrone_models.dart';
 import '../../components/app_card.dart';
 import '../../components/app_buttons.dart';
 import '../../app/theme/app_colors.dart';
+import '../payments/payment_screen.dart';
 
 class ServiceCatalogScreen extends StatelessWidget {
   final Function(ServiceModel)? onSelectService;
@@ -64,7 +65,7 @@ class ServiceCatalogScreen extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        '\$${srv.basePricePerHectare.toInt()}',
+                        'Q${srv.basePricePerHectare.toInt()}',
                         style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -165,7 +166,7 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
     if (_currentStep < 4) {
       setState(() => _currentStep++);
     } else {
-      _confirmBooking();
+      _navigateToPayment();
     }
   }
 
@@ -175,7 +176,7 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
     }
   }
 
-  void _confirmBooking() {
+  void _navigateToPayment() {
     final store = Provider.of<AppStore>(context, listen: false);
 
     final hectares = _selectedParcel!.areaHectares;
@@ -202,32 +203,23 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
       createdAt: DateTime.now(),
     );
 
-    store.addBooking(newBooking);
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => AlertDialog(
-        title: const Row(
-          children: [
-            Icon(Icons.check_circle_rounded, color: AppColors.successGreen, size: 28),
-            SizedBox(width: 8),
-            Text('¡Reserva Confirmada!'),
-          ],
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PaymentCheckoutScreen(
+          booking: newBooking,
+          service: _selectedService!,
+          parcel: _selectedParcel!,
+          currencySymbol: 'Q',
+          onPaymentSuccess: () {
+            store.addBooking(newBooking);
+            Navigator.pop(context); // Close Payment Screen
+            Navigator.pop(context); // Close Wizard
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('¡Reserva y Pago procesados con éxito!')),
+            );
+          },
         ),
-        content: Text(
-          'Tu servicio de ${_selectedService!.name} ha sido reservado con éxito. '
-          'Monto pagado (${_paymentOption == 'deposit' ? '${(depPct * 100).toInt()}% anticipo' : '100%'}): \$${paidAmount.toStringAsFixed(2)} MXN.',
-        ),
-        actions: [
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.pop(context);
-            },
-            child: const Text('Entendido'),
-          )
-        ],
       ),
     );
   }
@@ -282,7 +274,7 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
                 ],
                 Expanded(
                   child: PrimaryButton(
-                    label: _currentStep == 4 ? 'Confirmar & Pagar' : 'Siguiente',
+                    label: _currentStep == 4 ? 'Proceder al Pago' : 'Siguiente',
                     onPressed: _nextStep,
                   ),
                 ),
@@ -321,7 +313,7 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(srv.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                            Text('\$${srv.basePricePerHectare.toInt()} / Hectárea', style: const TextStyle(color: AppColors.emerald, fontWeight: FontWeight.w600)),
+                            Text('Q${srv.basePricePerHectare.toInt()} / Hectárea', style: const TextStyle(color: AppColors.emerald, fontWeight: FontWeight.w600)),
                           ],
                         ),
                       ),
@@ -341,6 +333,7 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
             const SizedBox(height: 16),
             ...store.parcels.map((pcl) {
               final isSelected = _selectedParcel?.id == pcl.id;
+              final isGuatemala = pcl.locationName.contains('Guatemala');
               return Container(
                 margin: const EdgeInsets.only(bottom: 12),
                 child: AppCard(
@@ -358,7 +351,7 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(pcl.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                            Text('Área: ${pcl.areaHectares} Ha | Cultivo: ${pcl.cropType}', style: const TextStyle(fontSize: 13)),
+                            Text('Área: ${isGuatemala ? '${(pcl.areaHectares * 1.4192).toStringAsFixed(1)} Mz' : '${pcl.areaHectares} Ha'} | Cultivo: ${pcl.cropType}', style: const TextStyle(fontSize: 13)),
                           ],
                         ),
                       ),
@@ -447,16 +440,16 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
                   _SummaryRow(label: 'Servicio', value: _selectedService!.name),
                   _SummaryRow(label: 'Parcela', value: _selectedParcel!.name),
                   _SummaryRow(label: 'Producto del Cliente', value: _clientProductNameCtrl.text.trim()),
-                  _SummaryRow(label: 'Área Total', value: '${hectares.toStringAsFixed(1)} Hectáreas'),
-                  _SummaryRow(label: 'Tarifa Base', value: '\$${_selectedService!.basePricePerHectare}/Ha'),
+                  _SummaryRow(label: 'Área Total', value: '${(hectares * 1.4192).toStringAsFixed(1)} Mz (${hectares.toStringAsFixed(1)} Ha)'),
+                  _SummaryRow(label: 'Tarifa Base', value: 'Q${_selectedService!.basePricePerHectare}/Ha'),
                   const Divider(height: 24),
-                  _SummaryRow(label: 'Subtotal', value: '\$${subtotal.toStringAsFixed(2)}'),
+                  _SummaryRow(label: 'Subtotal', value: 'Q${subtotal.toStringAsFixed(2)}'),
                   if (discount > 0)
-                    _SummaryRow(label: 'Descuento (+100 Ha)', value: '-\$${discount.toStringAsFixed(2)}', valueColor: AppColors.successGreen),
+                    _SummaryRow(label: 'Descuento (+100 Ha)', value: '-Q${discount.toStringAsFixed(2)}', valueColor: AppColors.successGreen),
                   const Divider(height: 24),
                   _SummaryRow(
                     label: 'TOTAL',
-                    value: '\$${total.toStringAsFixed(2)} MXN',
+                    value: 'Q${total.toStringAsFixed(2)} GTQ',
                     isBold: true,
                     valueColor: AppColors.emerald,
                   ),
@@ -477,7 +470,7 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('5. Opciones de Pago', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            const Text('5. Opciones de Reserva', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
             AppCard(
               border: _paymentOption == 'deposit' ? Border.all(color: AppColors.emerald, width: 2) : null,
@@ -491,7 +484,7 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text('Reservar con Depósito ${(depPct * 100).toInt()}%', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                        Text('\$${(total * depPct).toStringAsFixed(2)} MXN hoy', style: const TextStyle(color: AppColors.emerald, fontWeight: FontWeight.bold)),
+                        Text('Q${(total * depPct).toStringAsFixed(2)} hoy', style: const TextStyle(color: AppColors.emerald, fontWeight: FontWeight.bold)),
                         Text('Paga el ${((1.0 - depPct) * 100).toInt()}% restante al finalizar la operación', style: const TextStyle(fontSize: 12, color: AppColors.mutedText)),
                       ],
                     ),
@@ -512,7 +505,7 @@ class _BookingWizardScreenState extends State<BookingWizardScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text('Pagar 100% Completo', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                        Text('\$${total.toStringAsFixed(2)} MXN hoy', style: const TextStyle(color: AppColors.emerald, fontWeight: FontWeight.bold)),
+                        Text('Q${total.toStringAsFixed(2)} hoy', style: const TextStyle(color: AppColors.emerald, fontWeight: FontWeight.bold)),
                         const Text('Garantía total de asignación de dron y operador', style: TextStyle(fontSize: 12, color: AppColors.mutedText)),
                       ],
                     ),
