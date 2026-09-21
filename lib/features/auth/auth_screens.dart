@@ -27,44 +27,46 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    final bgColor = isDark ? const Color(0xFF042B24) : AppColors.cream;
+    final textColor = isDark ? Colors.white : AppColors.darkText;
+    final subtitleColor = isDark ? AppColors.limeAccent : AppColors.deepForest;
+
     return Scaffold(
-      backgroundColor: const Color(0xFF042B24),
+      backgroundColor: bgColor,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const IDroneLogoWidget(
-              size: 130,
-              showBackground: true,
-              backgroundColor: Color(0xFF061A12),
-              greenColor: Color(0xFF00D819),
-            ),
+            const IDroneLogoWidget(size: 130, showBackground: true),
             const SizedBox(height: 32),
-            const Text(
+            Text(
               'iDRONE',
               style: TextStyle(
-                color: Colors.white,
+                color: textColor,
                 fontSize: 34,
                 fontWeight: FontWeight.bold,
                 letterSpacing: 3,
               ),
             ),
             const SizedBox(height: 10),
-            const Text(
+            Text(
               'AGRICULTURA DE PRECISIÓN',
               style: TextStyle(
-                color: Color(0xFFC8F45A),
+                color: subtitleColor,
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
                 letterSpacing: 2,
               ),
             ),
             const SizedBox(height: 60),
-            const SizedBox(
+            SizedBox(
               width: 24,
               height: 24,
               child: CircularProgressIndicator(
-                color: Color(0xFFC8F45A),
+                color: subtitleColor,
                 strokeWidth: 2.5,
               ),
             ),

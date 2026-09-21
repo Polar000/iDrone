@@ -22,7 +22,7 @@ class AppStore extends ChangeNotifier {
   // Global Platform Parametrization Settings
   final PlatformSettings platformSettings = PlatformSettings();
 
-  // Current logged in user & Theme
+  // Current logged in user & Theme (Default starts in Light Mode as requested)
   UserModel _currentUser = UserModel(
     id: 'user_001',
     email: 'cliente@idrone.com',
@@ -32,7 +32,7 @@ class AppStore extends ChangeNotifier {
     createdAt: DateTime.now().subtract(const Duration(days: 30)),
   );
 
-  ThemeMode _themeMode = ThemeMode.system;
+  ThemeMode _themeMode = ThemeMode.light;
 
   ThemeMode get themeMode => _themeMode;
   UserModel get currentUser => _currentUser;

@@ -1,34 +1,48 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import '../app/theme/app_colors.dart';
 
 class IDroneLogoWidget extends StatelessWidget {
   final double size;
-  final Color greenColor;
-  final Color backgroundColor;
+  final Color? greenColor;
+  final Color? backgroundColor;
   final bool showBackground;
 
   const IDroneLogoWidget({
     super.key,
     this.size = 80,
-    this.greenColor = const Color(0xFF00D215),
-    this.backgroundColor = const Color(0xFF061E14),
+    this.greenColor,
+    this.backgroundColor,
     this.showBackground = true,
   });
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    final defaultBg = isDark ? const Color(0xFF061E14) : const Color(0xFFE8F4EC);
+    final defaultIcon = isDark ? const Color(0xFF00D215) : AppColors.deepForest;
+
     return Container(
       width: size,
       height: size,
       decoration: showBackground
           ? BoxDecoration(
-              color: backgroundColor,
+              color: backgroundColor ?? defaultBg,
               borderRadius: BorderRadius.circular(size * 0.28),
+              boxShadow: [
+                BoxShadow(
+                  color: isDark ? Colors.black.withValues(alpha: 0.35) : Colors.black.withValues(alpha: 0.08),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                )
+              ],
             )
           : null,
       padding: EdgeInsets.all(size * 0.16),
       child: CustomPaint(
-        painter: _DronePainter(color: greenColor),
+        painter: _DronePainter(color: greenColor ?? defaultIcon),
       ),
     );
   }
